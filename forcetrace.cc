@@ -324,16 +324,16 @@ void force_print(SphereSL& orthoh, EmpCylSL& ortho, vector<Particle>& part, stri
     float fth_o = (float) fth;
 
     // single file version
-    out.write((char *)&r, sizeof(float));
-    out.write((char *)&phi, sizeof(float));
-    out.write((char *)&z, sizeof(float));
-    out.write((char *)&lz, sizeof(float));
-    out.write((char *)&fr, sizeof(float));
-    out.write((char *)&fp, sizeof(float));
-    out.write((char *)&fz, sizeof(float));
-    out.write((char *)&frh, sizeof(float));
-    out.write((char *)&fph, sizeof(float));
-    out.write((char *)&fth, sizeof(float));
+    out.write((char *)&r_o, sizeof(float));
+    out.write((char *)&phi_o, sizeof(float));
+    out.write((char *)&z_o, sizeof(float));
+    out.write((char *)&lz_o, sizeof(float));
+    out.write((char *)&fr_o, sizeof(float));
+    out.write((char *)&fp_o, sizeof(float));
+    out.write((char *)&fz_o, sizeof(float));
+    out.write((char *)&frh_o, sizeof(float));
+    out.write((char *)&fph_o, sizeof(float));
+    out.write((char *)&fth_o, sizeof(float));
 
 
 	    // timing print
