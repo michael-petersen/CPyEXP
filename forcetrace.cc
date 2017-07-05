@@ -312,6 +312,17 @@ void force_print(SphereSL& orthoh, EmpCylSL& ortho, vector<Particle>& part, stri
 	//	out[1].write((char *)&fz, sizeof(double));
 	//out[2].write((char *)&fp, sizeof(double));
 
+    float r_o = (float) r;
+    float phi_o = (float) phi;
+    float z_o = (float) z;
+    float lz_o = (float) lz;
+    float fr_o = (float) fr;
+    float fp_o = (float) fp;
+    float fz_o = (float) fz;
+    float frh_o = (float) frh;
+    float fph_o = (float) fph;
+    float fth_o = (float) fth;
+
     // single file version
     out.write((char *)&r, sizeof(float));
     out.write((char *)&phi, sizeof(float));
