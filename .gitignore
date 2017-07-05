@@ -1,0 +1,11 @@
+*.pyc
+*.dat
+*legacy*
+*test*
+.#*
+*.so
+build/*
+dist/*
+*.egg-info
+.DS_Store
+*.o
