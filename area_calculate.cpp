@@ -11,6 +11,9 @@ clang++ --std=c++11 -I /usr/local/boost_1_61_0/include -L/usr/local/boost_1_61_0
 // specify all libraries and includes
 clang++ -Ofast --std=c++11 -v -I/usr/local/boost_1_61_0/include -L/usr/local/boost_1_61_0/lib -L/usr/local/CGAL-4.9.1/lib -I/usr/local/CGAL-4.9.1/include -L/usr/local/lib -I/usr/local/include -lCGAL -lgmp -lboost_program_options mp2.cpp -o mp2_tri
 
+// on cluster, simple compile string works:
+g++ -Ofast --std=c++11 -v -lCGAL -lgmp -lboost_program_options mp2_small.cpp -o mp2
+
 
 */
 
