@@ -20,9 +20,19 @@ A collection of C++ routines that will eventually be turned into something real,
 
 Currently, the included toolbox has
 1. area_calculate: Delaunay triangulation
-2. forcetrace: template for slicing across EXP dumps efficiently. requires EXP support
+2. cylcache: generate empirical orthogonal functions as per Weinberg 1999
 3. twopower: build simple two-power density models
-
+4. ic_generation/
+   a. forcetrace: template for slicing across EXP dumps efficiently. requires EXP support
+   b. basicics
+	   i. DiskHalo5.cc
+	   ii. DiskHalo5.h
+   c. bulgeics:
+	   i. DiskHalo6.cc
+	   ii. DiskHalo5.h
+   d. flexics:
+   e. table_disk:
+   f. exponential3.h
 
 
 
