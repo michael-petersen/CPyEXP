@@ -23,16 +23,16 @@ Currently, the included toolbox has
 2. cylcache: generate empirical orthogonal functions as per Weinberg 1999
 3. twopower: build simple two-power density models
 4. ic_generation/
-   a. forcetrace: template for slicing across EXP dumps efficiently. requires EXP support
-   b. basicics
-	   i. DiskHalo5.cc
-	   ii. DiskHalo5.h
-   c. bulgeics:
-	   i. DiskHalo6.cc
-	   ii. DiskHalo5.h
-   d. flexics:
-   e. table_disk:
-   f. exponential3.h
+   1.. forcetrace: template for slicing across EXP dumps efficiently. requires EXP support
+   2.. basicics
+	   1. DiskHalo5.cc
+	   2. DiskHalo5.h
+   3. bulgeics:
+	   1. DiskHalo6.cc
+	   2. DiskHalo5.h
+   4. flexics:
+   5. table_disk:
+   6. exponential3.h
 
 
 
