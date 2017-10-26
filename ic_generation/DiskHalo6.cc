@@ -46,7 +46,7 @@ bool   DiskHalo::LOGR        = true;
 int    DiskHalo::NCHEB       = 16;
 bool   DiskHalo::CHEBY       = false;
 
-unsigned DiskHalo::VFLAG     = 4;
+unsigned DiskHalo::VFLAG     = 16;
 unsigned DiskHalo::NBUF      = 8192;
 
 string DiskHalo::RUNTAG      = "debug";
@@ -58,6 +58,8 @@ double mass_func(double r)
 {
   return targetmass - model->get_mass(r);
 }
+
+// blank class
 
 DiskHalo::
 DiskHalo()
@@ -73,6 +75,8 @@ DiskHalo()
   MULTI      = false;
   halo       = NULL;
   halo2      = NULL;
+  halo3      = NULL;
+  halo4      = NULL;
   disk       = NULL;
   type       = Jeans;
 }
@@ -113,14 +117,16 @@ DiskHalo(SphericalSL* haloexp, SphericalSL* bulgeexp, EmpCylSL* diskexp,
   SphericalModelTable::even = 0;
   SphericalModelTable::logscale = LOGSCALE;
 
+  // make the basic tables
   halo = new SphericalModelTable(filename1, DIVERGE, DIVERGE_RFAC);
   bulge = new SphericalModelTable(filename3, DIVERGE3, DIVERGE_RFAC3);
 
   disk = new ExponentialDisk(A, RDMAX);
 
-  if (myid==0 && VFLAG & 1) {
+  if (myid==0) {
     cerr << "DiskHalo: DIVERGE=" << DIVERGE
 	 << " DIVERGE2=" << DIVERGE2
+      << " DIVERGE3=" << DIVERGE3
 	 << " A=" << A
 	 << " RDMAX=" << RDMAX
 	 << " filename1=" << filename1
@@ -142,7 +148,8 @@ DiskHalo(SphericalSL* haloexp, SphericalSL* bulgeexp, EmpCylSL* diskexp,
   newmodbulge = new AddBulge(halo, bulge); 
   halo2 = newmodbulge->get_model();
   halo2->setup_df(NUMDF, RA);
-  if (myid==0 && VFLAG & 2) {
+  // if (myid==0 && VFLAG & 2) {
+  if (myid==0) {
     char debugname[] = "df.debug";
     halo2->print_df(debugname);
     halo2->print_model("halobulgemodel.debug");
@@ -152,7 +159,7 @@ DiskHalo(SphericalSL* haloexp, SphericalSL* bulgeexp, EmpCylSL* diskexp,
   newmoddisk = new AddDisk(halo2, disk, dmass*COMPRESSION); 
   halo3 = newmoddisk->get_model();
   halo3->setup_df(NUMDF, RA);
-  if (myid==0 && VFLAG & 2) {
+  if (myid==0) {
     char debugname[] = "df2.debug";
     halo3->print_df(debugname);
     halo3->print_model("halobulgediskmodel.debug");
@@ -1982,11 +1989,16 @@ void DiskHalo::table_halo_disp()
 void DiskHalo::
 table_bulge(vector<Particle>& part)
 {
+  /*
+
+
+
+   */
   if (bulgetable.getchigh() == NHR-1) return;
   
   bulgetable.setsize(0, NHT-1, 0, NHR-1);
   
-  dc = 2.0/(NHT-1);
+  dc = 2.0/(NHT-1); // for default NHT=40, dc=0.05128
   double r2, maxr = 0.0, maxr1 = 0.0;
   for (auto &p : part) {
     r2 = 0.0;
@@ -2087,6 +2099,8 @@ table_bulge(vector<Particle>& part)
     ofstream out(sout.str().c_str());
     out.setf(ios::scientific);
     out.precision(8);
+
+    // 0: Theta  1: R    2: integrated bulgetable
     
     for (int j=0; j<NHT; j++) {
       for (int k=0; k<NHR; k++) {
@@ -2102,6 +2116,8 @@ table_bulge(vector<Particle>& part)
     ofstream out2(sout2.str().c_str());
     out2.setf(ios::scientific);
     out2.precision(2);
+
+    // 0: R   1: potential+bulge potential, 2: d(potential + bulgepotential) 3: bulge dispersion
     
     double rr, t, p, dp;
     double tb, pb, dpb;
@@ -2124,6 +2140,8 @@ table_bulge(vector<Particle>& part)
     sout3 << "disp_bulge_diff." << RUNTAG;
     ofstream out3(sout3.str().c_str());
     double xx, zz, costh;
+
+    // 0: costh 1:
     
     for (int j=0; j<NHT; j++) {
       costh = -1.0 + dc*j;
@@ -2222,6 +2240,7 @@ void DiskHalo::set_vel_bulge(vector<Particle>& part)
 				// Use Eddington
     
     if (DF && 0.5*(1.0+erf((r-R_DF)/DR_DF)) > (*rndU)()) {
+      
       // this was halo2, the composite potential, so now would be expected to be halo3? how do I get this exposed to outside world?
       halo3->gen_velocity(&p.pos[0], &p.vel[0], nok);
       

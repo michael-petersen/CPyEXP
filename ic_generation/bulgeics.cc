@@ -206,6 +206,7 @@ main(int argc, char **argv)
   SphericalSL::RMAX = 2.0; //RSPHSL;
   SphericalSL::NUMR = 4000; //NUMR;
   SLGridSph::sph_cache_name = ".slgrid_halo_cache";
+  SLGridSph::model_file_name = "SLGridSph.model";
                                 // Create expansion only if needed . . .
   SphericalSL *expandh1 = NULL;
   if (n_particlesH1) {
@@ -237,6 +238,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   SphericalSL::RMAX = 0.1; //RSPHSL;
   SphericalSL::NUMR = 4000; //NUMR;
   SLGridSph::sph_cache_name = ".slgrid_bulge_cache";
+  SLGridSph::model_file_name = "SLGridBULGE.model";
                                 // Create expansion only if needed . . .
   SphericalSL *expandh2 = NULL;
   if (n_particlesH2) {
@@ -342,12 +344,15 @@ MPI_Barrier(MPI_COMM_WORLD);
     int DIVERGE2=0;
     double DIVERGE_RFAC2 = 1.0;
 
+    int DIVERGE3=0;
+    double DIVERGE_RFAC3 = 1.0;
+
 
     diskhalo = new DiskHalo(expandh1, expandh2, expandd1,  
 	   HSCALE,  0.7*ASCALE,  disk_mass1,
-	 halofile1, 0, 1,
-	halofile2, 0, 1,
-			halofile3, 0, 1,
+			    halofile1,DIVERGE,DIVERGE_RFAC,
+	halofile2,DIVERGE2,DIVERGE_RFAC2,
+	halofile3,DIVERGE3,DIVERGE_RFAC3,
 	 DiskHalo::Asymmetric);
 
 	   if (myid==0) cout << "DONE GENERATING ONE-DISK MULTIMASS HALO WITH BULGE" << endl;

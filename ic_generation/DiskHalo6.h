@@ -198,6 +198,7 @@ class DiskHalo
   //! Destructor
   ~DiskHalo();
 
+  // position setting
   void set_halo(vector<Particle>& phalo, int nhalo, int npart);
   void set_bulge_coordinates(vector<Particle>& phalo, int nhalo, int npart);
   void set_disk_coordinates(ExponentialDisk* disk, vector<Particle>& pdisk, int ndisk, int npart);
