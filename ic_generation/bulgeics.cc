@@ -239,6 +239,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   SphericalSL::NUMR = 4000; //NUMR;
   SLGridSph::sph_cache_name = ".slgrid_bulge_cache";
   SLGridSph::model_file_name = "SLGridBULGE.model";
+
                                 // Create expansion only if needed . . .
   SphericalSL *expandh2 = NULL;
   if (n_particlesH2) {
