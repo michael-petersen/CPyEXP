@@ -6,10 +6,14 @@ The most basic, hard-wired initial condition generation.
 MSP 12.30.16
 
 */
+
+
+
                                 // System libs
 #include <unistd.h>
 #include <getopt.h>
 #include <values.h>
+
 
                                 // C++/STL headers
 #include <cmath>
@@ -33,7 +37,7 @@ MSP 12.30.16
 #include <EmpOrth9thd.h>
 #include <exponential3.h>
 
-
+// what does this do? Why does it break against boost?
 #include <norminv.H>
 
 #define M_SQRT1_3 (0.5773502691896257645091487)
@@ -47,7 +51,13 @@ MSP 12.30.16
 #include "SphericalSL.h"
 #include "DiskHalo5.h" 
 #include "localmpi.h"
-#include "ProgramParam.H"
+//#include "ProgramParam.H"
+
+                                // Also test out boost
+//#include <boost/program_options.hpp>
+
+
+
 //
 // Parameter definition stanza
 //
@@ -77,12 +87,25 @@ string outdir, runtag;
 //EmpCylSL* expandd1 = NULL;
 //SphericalSL *expandh1 = NULL;
 
+//namespace po = boost::program_options;
+
+
+
 // I don't like that these are global: move to disk class?
 // TODO
 double ASCALE = 0.0143;
 double HSCALE = 0.001;
 double ToomreQ = 0.9;
-double disk_mass1 = 0.0125;
+double disk_mass1 = 0.025;
+
+//double disk_mass1 = 0.0125;
+//double disk_mass1 = 0.00625;
+
+
+//double ASCALE, HSCALE, ToomreQ, disk_mass1;
+
+//const string PACKAGE_STRING = "basicICs for Disk and Halo generation";
+
 
 //
 // Analytic disk density (assuming exponential scaleheight)
@@ -151,18 +174,81 @@ main(int argc, char **argv)
 
   local_init_mpi(argc, argv);
 
-  /*
+
   //====================
   // Parse command line 
   //====================
 
-  try {
-    if (config.parse_args(argc, argv)) return -1;
-    param_assign();
+  /*
+
+  int nhalo1, ndisk1;
+  //double ASCALE,HSCALE,ToomreQ,disk_mass1;
+   
+  // Setup options.
+  po::options_description desc("Allowed Options");
+  desc.add_options()
+    ("nhalo1", po::value<int>(&nhalo1)->default_value(100), "Number of halo particles")
+    ("ndisk1", po::value<int>(&ndisk1)->default_value(100), "Number of disk particles")
+    //("ascale", po::value<double>(&ASCALE)->default_value(0.0143), "Scalelength for exponential disk")
+    //("hscale", po::value<double>(&HSCALE)->default_value(0.001), "Scaleheight for exponential disk")
+    //("toomreQ", po::value<double>(&ToomreQ)->default_value(0.9), "Toomre Q for disk")
+    //("disk_mass", po::value<double>(&disk_mass1)->default_value(0.025), "Disk Mass")
+    //("help,h",       "this help message");
+    ;
+
+  po::variables_map vm;
+
+  // nice little error handler
+try {
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);    
+  } catch (po::error& e) {
+    cout << "Option error: " << e.what() << std::endl;
+    exit(-1);
   }
-  catch (const char *msg) {
-    cerr << msg << endl;
-    return -1;
+
+
+//  if (vm.count("help")) {
+//    std::cout << desc << "\n";
+//    return 1;
+//  }
+
+*/
+
+  /*
+  double n0, tol;
+  unsigned T;
+  int niter;
+  std::string outf;
+
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help,h", "produce this help message")
+    ("density,D", po::value<double>(&n0)->default_value(1.0e-4), 
+     "Density in amu/cc. Good for n0<8.5e-2")
+    ("temp,T", po::value<unsigned>(&T)->default_value(25000), 
+     "Temperature in Kelvin (integer value)")
+    ("tol,e",     po::value<double>(&tol)->default_value(1.0e-10), 
+     "error tolerance")
+    ("iter,n",    po::value<int>(&niter)->default_value(1000), 
+     "maximum number of iterations")
+    ("outfile,o", po::value<std::string>(&outf)->default_value("IonRecombFrac.data"),
+     "data file for makeIon input")
+    ;
+  
+  po::variables_map vm;
+
+  try {
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);    
+  } catch (po::error& e) {
+    std::cout << "Option error: " << e.what() << std::endl;
+    exit(-1);
+  }
+
+  if (vm.count("help")) {
+    std::cout << desc << "\n";
+    return 1;
   }
 
   */
@@ -172,10 +258,11 @@ main(int argc, char **argv)
   set_fpu_handler();            // Make gdb trap FPU exceptions
 #endif
 
+
   
   int nhalo1 = 10000000;
   // int nhalo2 = 10000;
-  int ndisk1 = 1000000;
+   int ndisk1 = 1000000;
 
   int n_particlesH1;
   int n_particlesD1;
@@ -272,7 +359,7 @@ int LMAX2 = 36;
  int MMAX = 6;
 int NORDER = 18;
 double ASCALE = 0.0143;
- double HSCALE = 0.001;
+double HSCALE = 0.001;
 
 
   EmpCylSL* expandd1 = NULL;

@@ -56,7 +56,7 @@ main (int argc, char** argv)
 
   while (1) {
 
-    int c = getopt(argc, argv, "o:n:c:a:b:i:r:t:w:M:R:SvL");
+    int c = getopt(argc, argv, "o:n:c:a:b:i:r:t:w:W:M:R:SvL");
      
     if (c == -1) break;
 

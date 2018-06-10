@@ -7,6 +7,8 @@ clang++ -Ofast  -v -I/usr/local/boost_1_61_0/include -L/usr/local/boost_1_61_0/l
 
 boost needs .cpp
 
+//http://www.cplusplus.com/doc/tutorial/files/
+
 */
 #include <boost/program_options.hpp>
 

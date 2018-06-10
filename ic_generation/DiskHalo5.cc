@@ -147,7 +147,7 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
 	 << " filename1=" << filename1
 	 << " filename2=" << filename2
 	 << "\n";
-    halo1->print_model("diskhalo4_model_halo1.multi");
+    halo1->print_model("diskhalo5_model_halo1.multi");
   }
 
   AddDisk::logarithmic   = true;
@@ -158,13 +158,14 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
   AxiSymModel::gen_itmax = 4000000;
   AxiSymModel::gen_rmin  = RHMIN;
 
+  // halo 2 is the spherical table with the disk added
   newmod = new AddDisk(halo1, disk1, COMPRESSION); 
   halo2 = newmod->get_model();
   halo2->setup_df(NUMDF, RA);
   if (myid==0 && VFLAG & 2) {
     char debugname[] = "df2.debug";
     halo2->print_df(debugname);
-    halo2->print_model("diskhalo4_model_halo2.multi");
+    halo2->print_model("diskhalo5_model_halo2.multi");
   }
 
   if (myid==0) cout << "DF2 MADE" << endl;
@@ -215,7 +216,7 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
   
   delete halo3;
 
-  // CREATE A NEW MODEL WITH ORIGINAL DENSITY, ORIGINAL MASS, DOUBLE DISK ADDED POTENTIAL
+  // CREATE A NEW MODEL WITH ORIGINAL DENSITY, ORIGINAL MASS, DISK ADDED POTENTIAL
     halo4 = new SphericalModelTable(RNUM, r2-1, d3-1, m3-1, p2-1, 
 				  DIVERGE2, DIVERGE_RFAC2);
 
