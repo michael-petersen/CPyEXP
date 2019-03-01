@@ -106,6 +106,7 @@ int main(int argc, char** argv)
     std::vector<Point> points(nsample);
     for (int i=0; i<nsample; i++) points[i] = Point(X[i], Y[i]);
 
+    // compute the Delaunay Triangulation, in two dimensions.
     DT dt(points.begin(), points.end());
 
     if (dt.is_valid()) {

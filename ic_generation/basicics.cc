@@ -34,7 +34,7 @@ MSP 12.30.16
 #include <biorth.h>
 #include <SphericalSL.h>
 #include <interp.h>
-#include <EmpOrth9thd.h>
+#include <EmpCylSL.h>
 #include <exponential3.h>
 
 // what does this do? Why does it break against boost?
@@ -282,13 +282,7 @@ try {
   cout << "Processor " << myid << ": n_particlesH1=" << n_particlesH1 << "\n";
 #endif
 
-  /*
-  if (n_particlesH + n_particlesD + n_particlesG <= 0) {
-    if (myid==0) cout << "You have specified zero particles!\n";
-    MPI_Abort(MPI_COMM_WORLD, 3);
-    exit(0);
-  }
-  */
+
                                 // Vectors to contain phase space
                                 // Particle structure is defined in
                                 // Particle.H
@@ -310,10 +304,11 @@ try {
   SphericalSL::RMIN = 0.001; //RMIN;
   SphericalSL::RMAX = 2.0; //RSPHSL;
   SphericalSL::NUMR = 4000; //NUMR;
+  int nthrds = 1; // new  compatibility version
                                 // Create expansion only if needed . . .
   SphericalSL *expandh1 = NULL;
   if (n_particlesH1) {
-    expandh1 = new SphericalSL(LMAX, NMAX, SCSPH);
+    expandh1 = new SphericalSL(nthrds,LMAX, NMAX, SCSPH);
 #ifdef DEBUG
     string dumpname("debug");
     expandh1->dump_basis(dumpname);
@@ -345,7 +340,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   EmpCylSL::VFLAG       = 16;//VFLAG;
   EmpCylSL::logarithmic = 1;//LOGR;
   EmpCylSL::DENS        = 1;//DENS;
-  EmpCylSL::SELECT      = 0;//SELECT;
+  // EmpCylSL::SELECT      = 0;//SELECT;
 
     EmpCylSL::CACHEFILE      = ".eof.cache.file1";
 

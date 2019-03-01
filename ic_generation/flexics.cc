@@ -29,7 +29,7 @@ Test set-up of two simultaneous spherical bases
 #include <biorth.h>
 #include <SphericalSL.h>
 #include <interp.h>
-#include <EmpOrth9thd.h>
+#include <EmpCylSL.h>
 
 #include <norminv.H>
 
@@ -44,7 +44,7 @@ Test set-up of two simultaneous spherical bases
 #include "SphericalSL.h"
 #include "DiskHalo4.h" 
 #include "localmpi.h"
-#include "ProgramParam.H"
+//#include "ProgramParam.H"
 //
 // Parameter definition stanza
 //
@@ -124,8 +124,8 @@ double dcond(double R, double z, double phi, int M)
 
 // I don't like that these are global
 // TODO
-double ASCALE2 = 0.0283;
-double HSCALE2 = 0.004;
+double ASCALE2 = 0.0143;
+double HSCALE2 = 0.003;
 
 //
 // Analytic disk density (assuming exponential scaleheight)
@@ -212,7 +212,7 @@ main(int argc, char **argv)
   int nhalo1 = 10000000;
   // int nhalo2 = 10000;
   int ndisk1 = 1000000;
-  int ndisk2 = 200000;
+  int ndisk2 = 100000;
 
   int n_particlesH1, n_particlesH2;
   int n_particlesD1, n_particlesD2;
@@ -262,10 +262,12 @@ main(int argc, char **argv)
   SphericalSL::RMIN = 0.001; //RMIN;
   SphericalSL::RMAX = 2.0; //RSPHSL;
   SphericalSL::NUMR = 4000; //NUMR;
-                                // Create expansion only if needed . . .
+  int nthrds = 1; // new  compatibility version
+
+  // Create expansion only if needed . . .
   SphericalSL *expandh1 = NULL;
   if (n_particlesH1) {
-    expandh1 = new SphericalSL(LMAX, NMAX, SCSPH);
+    expandh1 = new SphericalSL(nthrds,LMAX, NMAX, SCSPH);
 #ifdef DEBUG
     string dumpname("debug");
     expandh1->dump_basis(dumpname);
@@ -303,7 +305,7 @@ main(int argc, char **argv)
 MPI_Barrier(MPI_COMM_WORLD);
 
   double disk_mass1 = 0.025;
-  double disk_mass2 = 0.005;
+  double disk_mass2 = 0.0025;
   
   //===========================Cylindrical expansion 1 ===========================
 
@@ -319,7 +321,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   EmpCylSL::VFLAG       = 16;//VFLAG;
   EmpCylSL::logarithmic = 1;//LOGR;
   EmpCylSL::DENS        = 1;//DENS;
-  EmpCylSL::SELECT      = 0;//SELECT;
+  // EmpCylSL::SELECT      = 0;//SELECT;
 
     EmpCylSL::CACHEFILE      = ".eof.cache.file1";
 

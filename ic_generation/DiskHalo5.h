@@ -44,7 +44,7 @@ public:
 class DiskHalo
 {
  private:
-  /*
+  /* why is this all commented out? see below in public
   AddDisk *newmod;
   SphericalModelTable *halo1, *halo2, *halo3, *halo4;
   SphericalModelMulti *multi;

@@ -112,7 +112,7 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
 
   for (int k=0; k<3; k++) center_pos[k] = center_vel[k] = 0.0;
 
-  DF          = true;
+  DF          = false;//true;
   MULTI       = true;
 
   dmass1       = DMass1;
