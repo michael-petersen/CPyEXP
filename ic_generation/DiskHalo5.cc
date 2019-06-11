@@ -21,7 +21,7 @@ double DiskHalo::RHMIN       = 1.0e-4;
 double DiskHalo::RHMAX       = 50.0;
 double DiskHalo::RDMIN       = 1.0e-4;
 double DiskHalo::RDMAX       = 20.0;
-double DiskHalo::Q           = 0.9;//1.2;
+double DiskHalo::Q           = 2.0;//1.6;//0.9;//1.2;
 double DiskHalo::SHFACTOR    = 16.0;
 double DiskHalo::TOLE        = 0.003;
 double DiskHalo::COMPRESSION = 1.0;
@@ -42,7 +42,8 @@ double DiskHalo::DR_DF       = 5.0;
 int    DiskHalo::LOGSCALE    = 0;
 bool   DiskHalo::LOGR        = true;
 
-int    DiskHalo::NCHEB       = 16;
+// these appear to be good settings, but may not be the best. use with caution!
+int    DiskHalo::NCHEB       = 8;
 bool   DiskHalo::CHEBY       = true; //false;
 
 unsigned DiskHalo::VFLAG     = 7;
@@ -112,7 +113,7 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
 
   for (int k=0; k<3; k++) center_pos[k] = center_vel[k] = 0.0;
 
-  DF          = false;//true;
+  DF          = true;
   MULTI       = true;
 
   dmass1       = DMass1;
@@ -147,7 +148,7 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
 	 << " filename1=" << filename1
 	 << " filename2=" << filename2
 	 << "\n";
-    halo1->print_model("diskhalo5_model_halo1.multi");
+    halo1->print_model("diskhalo4_model_halo1.multi");
   }
 
   AddDisk::logarithmic   = true;
@@ -158,14 +159,13 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
   AxiSymModel::gen_itmax = 4000000;
   AxiSymModel::gen_rmin  = RHMIN;
 
-  // halo 2 is the spherical table with the disk added
   newmod = new AddDisk(halo1, disk1, COMPRESSION); 
   halo2 = newmod->get_model();
   halo2->setup_df(NUMDF, RA);
   if (myid==0 && VFLAG & 2) {
     char debugname[] = "df2.debug";
     halo2->print_df(debugname);
-    halo2->print_model("diskhalo5_model_halo2.multi");
+    halo2->print_model("diskhalo4_model_halo2.multi");
   }
 
   if (myid==0) cout << "DF2 MADE" << endl;
@@ -216,7 +216,7 @@ DiskHalo(SphericalSL* haloexp, EmpCylSL* diskexp1,
   
   delete halo3;
 
-  // CREATE A NEW MODEL WITH ORIGINAL DENSITY, ORIGINAL MASS, DISK ADDED POTENTIAL
+  // CREATE A NEW MODEL WITH ORIGINAL DENSITY, ORIGINAL MASS, DOUBLE DISK ADDED POTENTIAL
     halo4 = new SphericalModelTable(RNUM, r2-1, d3-1, m3-1, p2-1, 
 				  DIVERGE2, DIVERGE_RFAC2);
 
@@ -296,6 +296,7 @@ DiskHalo::DiskHalo(const DiskHalo &p)
 
   expandh    = p.expandh;
   expandd1    = p.expandd1;
+  monoonly = true;
 
   disktableP = p.disktableP;
   disktableN = p.disktableN;
@@ -964,6 +965,7 @@ table_disk(vector<Particle>& part1)
   for (int i=ibeg[myid]; i<iend[myid]; i++) {
 
     phi = dP*i;
+//	phi = dP*4;
 
     for (int j=0; j<NDR; j++) {
 
@@ -974,10 +976,10 @@ table_disk(vector<Particle>& part1)
 
 				// For epicylic frequency
 				// 
-      disk_eval(expandd1, dmass1, R, 0.0, phi, pot1, fr1, fz1, fp1);
+      disk_eval(expandd1, dmass1, R, 0.0, 1.0, pot1, fr1, fz1, fp1);
 				// Use monopole part of expansion here, only
       if (expandh)		//
-	expandh->determine_fields_at_point(R, 0.5*M_PI, phi,
+	expandh->determine_fields_at_point(R, 0.5*M_PI, 1.0,
 					   &dens, &potl, &dpr, &dpt, &dpp);
 
       
@@ -985,9 +987,12 @@ table_disk(vector<Particle>& part1)
 				// Use monopole approximation for dPhi/dr
 
       // might want to go back to this with the new double disk
-      //workE[j] = odd2(workV[0][j], nrD, nhD, 1)/(R*R);
 				// Use basis evaluation (dPhi/dr)
       workE[j]    = max<double>(-fr1 + dpr, 1.0e-20);
+
+	// monopole approximation for dPhi/dr
+      if (monoonly)      workE[j] = odd2(workV[0][j], nrD, nhD, 1)/(R*R);
+
 
       workV[1][j] = disk_surface_density(disk1, R);
 				// Sigma(R)*dPhi/dr*R
@@ -1108,8 +1113,9 @@ table_disk(vector<Particle>& part1)
       workQ2smooth[j] = pow10(cheb->eval(workR[j]));
     }
 
+         cout << "SmoothQ2 built." << endl;
+
      }
-     cout << "SmoothQ2 built." << endl;
      
 				// Compute epicylic freqs
     for (int j=0; j<NDR; j++) {
@@ -1144,22 +1150,7 @@ table_disk(vector<Particle>& part1)
  
     if (CHEBY) cheb2 = new Cheby1d(workV[0], workV[4], NCHEB);
 
-    // remember that workV[4] is negative, so don't do what you did below ever again
-      
-    /*
-    if (CHEBY) {
-      for (int j=0; j<NDR; j++) {
-	workVfourlog[j] = log10(workV[4][j]);
-      }
 
-      cheb2 = new Cheby1d(workV[0], workVfourlog, NCHEB);
-
-      for (int j=0; j<NDR; j++) {
-	workVfoursmooth[j] = pow10(cheb2->eval(workV[0][j]));
-      }
-
-    }
-    */
 
     Trapsum(workV[0], workV[2], workV[3]);
     for (int j=0; j<NDR; j++) {
@@ -1248,6 +1239,9 @@ table_disk(vector<Particle>& part1)
 	  << setw(14) << epi(r, 0.0, 0.0)	// #22  Epi routine
 	  << setw(14) << workD[6][j]            // #23  halo potential (from fit)
 	  << setw(14) << workD[7][j]            // #24  halo density (from fit
+	  << setw(14) << workV[0][j]            // #25  r
+	  << setw(14) << workV[2][j]            // #26  sigma stuff
+	  << setw(14) << workV[4][j]            // #27  
 	  << endl;
     }
 
@@ -1531,7 +1525,7 @@ set_vel_disk(vector<Particle>& part1)
   double maxVR=-1.0e20, RVR=1e20;
   double maxVP=-1.0e20, RVP=1e20;
   double maxVZ=-1.0e20, RVZ=1e20;
-  double vz, vr, vp, R, x, y, z, ac, vc, va, as, ad;
+  double vz, vr, vp, R, x, y, z, ac, vc, va, as, ad, vatmp;
   double vel[3], vel1[3], massp, massp1;
 
   for (int k=0; k<3; k++) vel[k] = vel1[k] = 0.0;
@@ -1554,7 +1548,7 @@ set_vel_disk(vector<Particle>& part1)
     if (type==DiskHalo::Epicyclic) 
       out << setw(14) << "R1" <<  setw(14) << "X";
     else
-      out << setw(14) << "vv_R" << setw(14) << "vv_phi" << setw(14) << "vv_z";
+      out << setw(14) << "vv_R" << setw(14) << "vv_phi" << setw(14) << "vv_z" << setw(14) << "ad" << setw(14) << "as";
     out << endl;
   }
 
@@ -1604,10 +1598,26 @@ set_vel_disk(vector<Particle>& part1)
       ad = a_drift(x, y, z);
       as = 1 + vvR*ad/(vc*vc);
 
-      if (as > 0.0)
+      //if (as > 0.0)
+	// this is the original version, but I think it is in error
+      //	ac = vc*(1.0-sqrt(as));
+	//ac = vc*sqrt(as);
+      //else {
+	//if (as<0.0) ac = vc;
+
+	// choose a 'smart' prefactor to stop runaway minimaztion
+      //	if (as<0.0) ac = 0.5*vc;
+
+      if (as > 0.5*vc)
+	// this is the original version, but I think it is in error
 	ac = vc*(1.0-sqrt(as));
+	//ac = vc*sqrt(as);
       else {
-	if (as<0.0) ac = vc;
+	//if (as<0.0) ac = vc;
+
+	// choose a 'smart' prefactor to stop runaway minimization
+	if (as<0.5*vc) ac = 0.5*vc;
+	
 	int op = cout.precision(3);
 	cout << "ac oab:"
 	     << " as="   << setw(10) << as 
@@ -1620,7 +1630,12 @@ set_vel_disk(vector<Particle>& part1)
 	cout.precision(op);
       }
 
-      va = max<double>(vc - ac, MINDOUBLE);
+      
+      //va = max<double>(vc - ac, MINDOUBLE);
+      vatmp = max<double>(vc - ac, MINDOUBLE);
+
+      // put in another block: if ac is negative and blows up va
+      va = min<double>(vatmp,vc);
      
       vz   = rn()*sqrt(max<double>(vvZ, MINDOUBLE));
       vr   = rn()*sqrt(max<double>(vvR, MINDOUBLE));
@@ -1630,7 +1645,7 @@ set_vel_disk(vector<Particle>& part1)
 	out << setw(14) << R   << setw(14) << z   << setw(14) << vc
 	    << setw(14) << va  << setw(14) << ac  << setw(14) << epi(x, y, z)
 	    << setw(14) << vr  << setw(14) << vp  << setw(14) << vz
-	    << setw(14) << vvR << setw(14) << vvP << setw(14) << vvZ
+	    << setw(14) << vvR << setw(14) << vvP << setw(14) << vvZ << setw(14) << ad << setw(14) << as
 	    << endl;
 
     p.vel[0] = vr*x/R - vp*y/R;

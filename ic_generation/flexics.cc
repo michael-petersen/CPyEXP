@@ -306,6 +306,10 @@ MPI_Barrier(MPI_COMM_WORLD);
 
   double disk_mass1 = 0.025;
   double disk_mass2 = 0.0025;
+
+    // set some DiskHalo Parameters
+  double ToomreQ = 1.4;
+  DiskHalo::Q           = ToomreQ;
   
   //===========================Cylindrical expansion 1 ===========================
 

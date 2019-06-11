@@ -181,7 +181,7 @@ main(int argc, char **argv)
 
   /*
 
-  int nhalo1, ndisk1;
+  int for a discalo1, ndisk1;
   //double ASCALE,HSCALE,ToomreQ,disk_mass1;
    
   // Setup options.

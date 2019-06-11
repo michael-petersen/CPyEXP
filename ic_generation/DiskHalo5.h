@@ -25,7 +25,7 @@
 
 #include "AddDisk.h"
 #include "SphericalSL.h"
-#include "EmpOrth9thd.h"
+#include "EmpCylSL.h"
 #include "SParticle.H"
 
 class DiskHaloException : public std::runtime_error
@@ -44,7 +44,7 @@ public:
 class DiskHalo
 {
  private:
-  /* why is this all commented out? see below in public
+  /*
   AddDisk *newmod;
   SphericalModelTable *halo1, *halo2, *halo3, *halo4;
   SphericalModelMulti *multi;
@@ -91,9 +91,9 @@ class DiskHalo
   // For frequency computation
   //
 				// Number of mass and number bins, log spaced
-  static const unsigned nh = 200;
+  static const unsigned nh = 1600;
 				// Minimum number on grid before computing
-  static const unsigned mh = 5;
+  static const unsigned mh = 50;
 				// Boundaries and delta
   double hDmin, hDmax, dRh;
   vector<double>   nhD;		// Mass in bins
@@ -117,7 +117,7 @@ class DiskHalo
 
   SphericalSL* expandh;
   EmpCylSL* expandd1;
-
+ bool monoonly;
 
   
   enum DiskGenType { Jeans, Asymmetric, Epicyclic };
