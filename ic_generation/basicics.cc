@@ -291,6 +291,7 @@ try {
 
   // set some DiskHalo Parameters
   DiskHalo::Q           = ToomreQ;
+  DiskHalo::COMPRESSION = 1.0;
 
 
   //===========================Spherical expansion 1=============================

@@ -17,9 +17,9 @@
 #include "DiskHalo5.h"
 
 				// Grid parameters and Toomre Q
-double DiskHalo::RHMIN       = 1.0e-4;
+double DiskHalo::RHMIN       = 1.0e-6;
 double DiskHalo::RHMAX       = 50.0;
-double DiskHalo::RDMIN       = 1.0e-4;
+double DiskHalo::RDMIN       = 1.0e-6;
 double DiskHalo::RDMAX       = 20.0;
 double DiskHalo::Q           = 2.0;//1.6;//0.9;//1.2;
 double DiskHalo::SHFACTOR    = 16.0;
@@ -1113,7 +1113,7 @@ table_disk(vector<Particle>& part1)
       workQ2smooth[j] = pow10(cheb->eval(workR[j]));
     }
 
-         cout << "SmoothQ2 built." << endl;
+    //cout << "SmoothQ2 built." << endl;
 
      }
      
@@ -1632,10 +1632,14 @@ set_vel_disk(vector<Particle>& part1)
 
       
       //va = max<double>(vc - ac, MINDOUBLE);
+
       vatmp = max<double>(vc - ac, MINDOUBLE);
 
       // put in another block: if ac is negative and blows up va
+      if (R>3.*scaleheight1)
       va = min<double>(vatmp,vc);
+      else
+	va = vc;
      
       vz   = rn()*sqrt(max<double>(vvZ, MINDOUBLE));
       vr   = rn()*sqrt(max<double>(vvR, MINDOUBLE));

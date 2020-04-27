@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     ("input,i",      po::value<std::string>(&input)->default_value("sample_orbits.txt"), "input data")
     ("output,o",     po::value<std::string>(&output)->default_value("processed.txt"), "output grid")
     ("outputt,ot",     po::value<std::string>(&outputt)->default_value("processed_triangles.txt"), "output triangles grid")
-    ("omega,O",      po::value<double>(&omega)->default_value(37.5), "pattern speed")
+    ("omega,O",      po::value<double>(&omega)->default_value(0.0), "pattern speed")
     ("ratio,r",      po::value<double>(&ratio)->default_value(15.0), "maximum axis ratio")
     ("dt,t",         po::value<double>(&dt)->default_value(0.0003), "orbit time step")
     ("help,h",       "this help message");
