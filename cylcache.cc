@@ -35,9 +35,9 @@ namespace po = boost::program_options;
 #include <hernquist.h>
 #include <model3d.h>
 #include <biorth.h>
-#include <SphericalSL.h>
+#include <SphericalSL.H>
 #include <interp.h>
-#include <EmpOrth9thd.h>
+#include <EmpCylSL.h>
 
 #include <norminv.H>
 
@@ -98,7 +98,9 @@ bool CMAP;
 bool LOGR;
 bool verbose;
 int NUMR;
-
+bool evolved;
+  string       dbods;
+int ndisk;
 
 
 //
@@ -215,8 +217,18 @@ main(int argc, char **argv)
     ("cmap", po::value<bool>(&CMAP)->default_value(false),
      "use coordinate mapping")
 
+    ("ndisk",           po::value<int>(&ndisk)->default_value(1000),                    "Number of disk particles")
+
+
     ("logr", po::value<bool>(&LOGR)->default_value(false),
      "use logarithmic radius")
+
+    ("evolved",
+    po::value<bool>(&evolved)->default_value(false), "Use existing disk body file given by <dbods> and do not create a new disk")
+
+     ("dbods",           po::value<string>(&dbods)->default_value("disk.bods"),          "Disk particle output file")
+
+    
     ;
   
   po::variables_map vm;
@@ -236,12 +248,71 @@ main(int argc, char **argv)
  
   if (vm.count("verbose")) verbose = true;
 
-
+    // Vectors to contain phase space Particle structure is defined in
+  // Particle.H
+  //
+vector<Particle> dparticles;
 
 MPI_Barrier(MPI_COMM_WORLD);
 
+ int n_particlesD;
+
   double disk_mass1 = 0.025;
   double disk_mass2 = 0.005;
+
+  // ------------------------------------------------------------------------
+  if (evolved) {		// ---------------------------
+				// Use existing halo body file
+    std::ifstream hin(dbods);	// ---------------------------
+    
+    if (hin) {
+      std::string line;
+      std::getline(hin, line);
+      std::istringstream sin(line);
+
+      int niatr, ndatr;
+      sin >> ndisk;
+      sin >> niatr;
+      sin >> ndatr;
+      
+      // Divvy up the particles by core.  The root node gets any
+      // remainder.
+      //
+      n_particlesD = ndisk/numprocs;
+
+      int ibeg = 0;
+      int iend = ndisk - n_particlesD*(numprocs-myid-1);
+      
+      if (myid>0) {
+	ibeg = ndisk - n_particlesD*(numprocs-myid);
+	for (int i=0; i<ibeg; i++) std::getline(hin, line);
+      }
+
+      Particle P(niatr, ndatr);
+
+      for (int i=ibeg; i<iend; i++) {
+	std::getline(hin, line);
+	std::istringstream sin(line);
+	sin >> P.mass;
+	for (int k=0; k<3; k++)     sin >> P.pos[k];
+	for (int k=0; k<3; k++)     sin >> P.vel[k];
+	for (int k=0; k<niatr; k++) sin >> P.iattrib[k];
+	for (int k=0; k<ndatr; k++) sin >> P.dattrib[k];
+	dparticles.push_back(P);
+      }
+
+    } else {
+      // Error message
+      if (myid==0)
+	std::cout << "Could not read halo file <" << dbods
+		  << "> . . . quitting" << std::endl;
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Finalize();
+      exit(-1);
+    }
+  }
+
   
   //===========================Cylindrical expansion 1 ===========================
 
@@ -257,7 +328,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     EmpCylSL::VFLAG       = 16;//VFLAG;
     EmpCylSL::logarithmic = LOGR;
     EmpCylSL::DENS        = 1;//DENS;
-    EmpCylSL::SELECT      = 0;//SELECT; true if signal-to-noise methods are on
+    //SELECT      = 0;//SELECT; true if signal-to-noise methods are on
     EmpCylSL::CACHEFILE      = CACHEFILE;
 
 
@@ -297,7 +368,33 @@ if (myid==0) cout << "SCALELENGTH1:" << setw(16) << expandd1->get_ascale() << en
  if (myid==0) cout << "rnum=" << RNUM << " pnum=" << PNUM << " tnum="  << TNUM << endl;
 
  // generate the EOF
+
+ if (evolved) {
+   if (myid==0) std::cout << "Beginning disk accumulation . . . " << std::flush;
+    expandd1->setup_accumulation();
+
+      expand1->setup_eof();
+      if (nthrds>1)
+	expand1->accumulate_eof_thread(dparticles, true);
+      // report = true means we see the EOF computation progress
+      else
+	expand1->accumulate_eof(dparticles, true);
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      if (myid==0) std::cout << "done" << std::endl;
+  
+      if (myid==0) std::cout << "Making the EOF . . . " << std::flush;
+      expand1->make_eof();
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      //      if (myid==0) expandd1->cache_grid(1);
+    
+ } else {
+    if (myid==0) std::cout << "Building a conditioned disc . . . " << std::flush;
+
 	expandd1->generate_eof(RNUM, PNUM, TNUM, dcond);
+ }
+	
 
 
     if (myid==0) cout << "done!" <<endl;
@@ -313,5 +410,5 @@ if (myid==0) cout << "SCALELENGTH1:" << setw(16) << expandd1->get_ascale() << en
   MPI_Finalize();
 
   return 0;
-}
+  }
 
