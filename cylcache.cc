@@ -214,7 +214,7 @@ main(int argc, char **argv)
     ("eofcache", po::value<string>(&CACHEFILE)->default_value("eof.cache.file"),
      "cachefile for EOF")
 
-    ("cmap", po::value<bool>(&CMAP)->default_value(false),
+    ("cmap", po::value<bool>(&CMAP)->default_value(true),
      "use coordinate mapping")
 
     ("ndisk",           po::value<int>(&ndisk)->default_value(1000),                    "Number of disk particles")
@@ -324,7 +324,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     EmpCylSL::NUMX        = NUMX;
     EmpCylSL::NUMY        = NUMY;
     EmpCylSL::NUMR        = NUMR;
-    EmpCylSL::CMAP        = CMAP;
+    EmpCylSL::CMAPR        = CMAPR;
     EmpCylSL::VFLAG       = 16;//VFLAG;
     EmpCylSL::logarithmic = LOGR;
     EmpCylSL::DENS        = 1;//DENS;
@@ -357,9 +357,11 @@ double ASCALE = 0.0143;
  double HSCALE = 0.001;
     */
 
-  EmpCylSL* expandd1 = NULL;
+    //EmpCylSL* expandd1 = NULL;
   
-    expandd1 = new EmpCylSL(NMAX, LMAX, MMAX, NORDER, ASCALE, HSCALE);
+  //    expandd1 = new EmpCylSL(NMAX, LMAX, MMAX, NORDER, ASCALE, HSCALE);
+  boost::shared_ptr<EmpCylSL> expandd1;
+    expandd1 = boost::make_shared<EmpCylSL>(NMAX, LMAX, MMAX, NORDER, ASCALE, HSCALE, 6);
 
 if (myid==0) cout << "SCALELENGTH1:" << setw(16) << expandd1->get_ascale() << endl;
 
@@ -373,29 +375,26 @@ if (myid==0) cout << "SCALELENGTH1:" << setw(16) << expandd1->get_ascale() << en
    if (myid==0) std::cout << "Beginning disk accumulation . . . " << std::flush;
     expandd1->setup_accumulation();
 
-      expand1->setup_eof();
+      expandd1->setup_eof();
       if (nthrds>1)
-	expand1->accumulate_eof_thread(dparticles, true);
+	expandd1->accumulate_eof_thread(dparticles, true);
       // report = true means we see the EOF computation progress
       else
-	expand1->accumulate_eof(dparticles, true);
+	expandd1->accumulate_eof(dparticles, true);
       MPI_Barrier(MPI_COMM_WORLD);
 
       if (myid==0) std::cout << "done" << std::endl;
   
       if (myid==0) std::cout << "Making the EOF . . . " << std::flush;
-      expand1->make_eof();
+      expandd1->make_eof();
       MPI_Barrier(MPI_COMM_WORLD);
-
-      //      if (myid==0) expandd1->cache_grid(1);
     
  } else {
-    if (myid==0) std::cout << "Building a conditioned disc . . . " << std::flush;
+    if (myid==0) std::cout << "Building a conditioned disc basis . . . " << std::flush;
 
 	expandd1->generate_eof(RNUM, PNUM, TNUM, dcond);
  }
 	
-
 
     if (myid==0) cout << "done!" <<endl;
     
@@ -405,7 +404,7 @@ if (myid==0) cout << "SCALELENGTH1:" << setw(16) << expandd1->get_ascale() << en
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  delete expandd1;
+  // delete expandd1;
 
   MPI_Finalize();
 
