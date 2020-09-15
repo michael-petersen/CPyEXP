@@ -300,7 +300,7 @@ double DiskDens(double R, double z, double phi)
       double ra = R/BSCALE;
       double rc = 0; // no core allowed!
       double rho0 = (FBULGE)/(4*M_PI*BSCALE*BSCALE*BSCALE*ra*ra/(2*(1+ra)*(1+ra))); // normalisation for bulge
-      double bdens = rho0/((R+rc)*pow((1+ra),3.)); // bulge density
+      double bdens = rho0/((ra+rc)*pow((1+ra),3.)); // bulge density
 
       double Z2 = z*z + HSCALE*HSCALE;
       double Z  = sqrt(Z2);
@@ -904,7 +904,7 @@ main(int ac, char **av)
 
       if (dmodel.compare("MN")==0) // Miyamoto-Nagai
 	model = boost::make_shared<MNdisk>(1.0, H);
-      elif (dmodel.compare("BDisc")==0) // Bulge+Miyamoto-Nagai
+      else if (dmodel.compare("BDisc")==0) // Bulge+Miyamoto-Nagai
 	model = boost::make_shared<BDisc>(Ab, 1.0, H, FBULGE);
       else			// Default to exponential
 	model = boost::make_shared<Exponential>(1.0, H);

@@ -9,7 +9,7 @@
 class BDisc : public EmpCylSL::AxiDisk
 {
 private:
-  double a, r0, z0, fulge;
+  double a, r0, z0, fbulge;
   /*
   a      : the scale radius for the bulge
   r0     : the scale length for the MN disc
@@ -29,7 +29,7 @@ public:
     double ra = R/a;
     double rc = 0; // no core allowed!
     double rho0 = (M*fbulge)/(4*M_PI*a*a*a*ra*ra/(2*(1+ra)*(1+ra))); // normalisation for bulge
-    double bdens = rho0/((R+rc)*pow((1+ra),3.)); // bulge density
+    double bdens = rho0/((ra+rc)*pow((1+ra),3.)); // bulge density
       
     // the MN disc component
     double Z2 = z*z + z0*z0;
