@@ -345,8 +345,9 @@ DiskHalo::DiskHalo(const DiskHalo &p)
 
 double DiskHalo::disk_density(double R, double z)
 {
-  double q = 1.0/cosh(z/scaleheight);
-  return disk_surface_density(R)*q*q*0.5/scaleheight;
+  //double q = 1.0/cosh(z/scaleheight);
+  //return disk_surface_density(R)*q*q*0.5/scaleheight;
+  return disk->disk_density(R,z);
 }
 
 double DiskHalo::disk_surface_density(double R)

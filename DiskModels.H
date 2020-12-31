@@ -5,6 +5,34 @@
 
 
 
+//! A two-power halo
+class TwoPower : public EmpCylSL::AxiDisk
+{
+private:
+  double rs, rc, q, rho0, alpha,beta;
+  /*
+
+
+   */
+
+public:
+
+  TwoPower(double rs, double rc, double q, double rho0=1, double alpha=1,
+	   double beta=3, double M=1) :
+    rs(rs), rc(rc), q(q), EmpCylSL::AxiDisk(M, "TwoPower") {}
+
+  double operator()(double R, double z, double phi=0.)
+  {
+    double ra = sqrt(R*R + q*q*z*z)/rs;
+    double testrho0 = 1./(pow(rc,alpha)*(pow(1,beta)));
+    return (rho0)/(testrho0*pow(ra+rc,alpha)*pow(1+ra,beta));
+  }
+
+};
+
+
+
+
 //! A Hernquist bulge plus MN disc model, for McMillan 2017/Erkal+ 2019 modeling
 class BDisc : public EmpCylSL::AxiDisk
 {
@@ -28,14 +56,15 @@ public:
     // the bulge component: set the normalisation
     double ra = R/a;
     double rc = 0; // no core allowed!
-    double rho0 = (M*fbulge)/(4*M_PI*a*a*a*ra*ra/(2*(1+ra)*(1+ra))); // normalisation for bulge
-    double bdens = rho0/((ra+rc)*pow((1+ra),3.)); // bulge density
+    double rho0b = (M*fbulge)/(4*M_PI*a*a*a*ra*ra/(2*(1+ra)*(1+ra))); // normalisation for bulge
+    double bdens = rho0b/((ra+rc)*pow((1+ra),3.)); // bulge density
       
     // the MN disc component
     double Z2 = z*z + z0*z0;
     double Z  = sqrt(Z2);
     double Q2 = (r0 + Z)*(r0 + Z);
     double fdisk = 1 - fbulge;
+    double rho0mn = (M*fdisk)/M_PI;
     double ddens = 0.25*z0*z0*fdisk*M/M_PI*(r0*R*R + (r0 + 3.0*Z)*Q2)/( pow(R*R + Q2, 2.5) * Z*Z2 );
 
     return bdens+ddens;

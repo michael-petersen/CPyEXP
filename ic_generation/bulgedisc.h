@@ -1,8 +1,15 @@
 // This may look like C code, but it is really -*- C++ -*-
 
 //
-// 3D Exponential disk
+// A Hernquiest bulge and M-N disc model
 //
+
+/*
+A Hernquist bulge falls off too quickly for Abel inversion to
+work. Need to add it in after the fact.
+
+ */
+
 
 #ifndef _Expon_h
 #define _Expon_h
@@ -13,15 +20,13 @@ const char rcsid_expon[] = "$Id$";
 
 #include <numerical.h>
 #include <gaussQ.h>
-#include <interp.h>
-
 
 extern "C" double i0(double);
 extern "C" double i1(double);
 extern "C" double k0(double);
 extern "C" double k1(double);
 
-class ExponentialDisk : public AxiSymModel
+class BMNDisk : public AxiSymModel
 {
 private:
   
@@ -34,7 +39,7 @@ private:
 
 public:
 
-  ExponentialDisk(double RSCALE=1.0, double HSCALE=0.1, double RMAX=20.0, double DMASS=1.0) 
+  BMNDisk(double RSCALE=1.0, double HSCALE=0.1, double RMAX=20.0, double DMASS=1.0) 
   { 
     a       = RSCALE;
     h       = HSCALE;
@@ -43,30 +48,44 @@ public:
     m       = DMASS;
     den0    = m*0.5/M_PI/a/a;
     dim     = 3;
-    ModelID = "Exponential3Disk"; 
+    ModelID = "BMNDisk"; 
 
     dist_defined = false;
 
-    tabulate_deprojection(HSCALE/RSCALE,1.0,200,1000);
+    tabulate_deprojection();
+    massfunc = massRg;
     sdens = rsurf;
-    
+
   }
 
   double disk_density(const double r, double z) {
 
-    double q = 1.0/cosh(z/h);
+    // the bulge component: set the normalisation
+    double ra = r/a;
+    double rc = 0; // no core allowed!
+    double rho0 = (M*fbulge)/(4*M_PI*a*a*a*ra*ra/(2*(1+ra)*(1+ra))); // normalisation for bulge
+    double bdens = rho0/((ra+rc)*pow((1+ra),3.)); // bulge density
+      
+    // the MN disc component
+    double Z2 = z*z + z0*z0;
+    double Z  = sqrt(Z2);
+    double Q2 = (r0 + Z)*(r0 + Z);
+    double fdisk = 1 - fbulge;
+    double ddens = 0.25*z0*z0*fdisk*M/M_PI*(r0*r*r + (r0 + 3.0*Z)*Q2)/( pow(r*r + Q2, 2.5) * Z*Z2 );
 
-    return m*den0*exp(-r/a)*q*q*0.5/h;
+    return bdens+ddens;
 }
 
 
   // Required member functions
 
   // 2d mass
-  double get_mass(const double r) { return m*(1.0 - exp(-r/a)*(1.0+r/a)); }
+  //double get_mass(const double r) { return m*(1.0 - exp(-r/a)*(1.0+r/a)); }
+  double get_mass(const double r) { return m*(1.0 - massfunc.eval(r)); }
 
   // surface density
-  double get_density(const double r) { return den0*exp(-r/a); }
+  //double get_density(const double r) { return den0*exp(-r/a); }
+  double get_density(const double r) { return sdens.eval(r); }
 
 
   
@@ -75,7 +94,7 @@ public:
     return -M_PI*den0*r*(i0(y)*k1(y) - i1(y)*k0(y));
   }
 
-  void test_threedee(void) { cout << "This is a 3D exponential Disk."; };							
+  void test_threedee(void) { cout << "This is a 3D bulge-and-disc model."; };							
 
   double get_dpot(const double r) {
     double y=0.5*r/a;
@@ -103,6 +122,8 @@ public:
   double get_hscale(void) { return h; }  
   double get_mass(void) { return m; }
 
+
+
   double distf(double E, double L) {
     bomb("Dist fct not defined!");
     return 0.0;
@@ -123,19 +144,18 @@ public:
     return 0.0;
   }
 
-
-
+};
 
 
 void tabulate_deprojection(double H, double Rf, int NUMR, int NINT)
 {
   LegeQuad lq(NINT);
-  Linear1d densRg, massRg;
+
 
   std::vector<double> rr(NUMR), rl(NUMR), sigI(NUMR), rhoI(NUMR, 0.0);
 
-  double Rmin = log(rmin);
-  double Rmax = log(rmax);
+  double Rmin = log(RMIN);
+  double Rmax = log(RMAX);
 
   double dr = (Rmax - Rmin)/(NUMR-1);
 
@@ -200,10 +220,8 @@ void tabulate_deprojection(double H, double Rf, int NUMR, int NINT)
 
   // Finalize
   //
-  densRg = Linear1d(rl, rho);
+  //densRg = Linear1d(rl, rho);
   massRg = Linear1d(rl, mass);
 }
-
-};
 
 #endif

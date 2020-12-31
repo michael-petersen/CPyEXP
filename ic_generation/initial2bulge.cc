@@ -723,7 +723,7 @@ main(int ac, char **av)
   }
   catch (const std::out_of_range& err) {
     if (myid==0) {
-      std::cout << "DiskType error in configuraton file" << std::endl;
+      std::cout << "DiskType error in configuration file" << std::endl;
       std::cout << "Valid options are: ";
       for (auto v : dtlookup) std::cout << v.first << " ";
       std::cout << std::endl;
