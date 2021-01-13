@@ -1,7 +1,7 @@
 // This may look like C code, but it is really -*- C++ -*-
 
 //
-// A Hernquiest bulge and M-N disc model
+// A Hernquist bulge and M-N disc model
 //
 
 /*
@@ -58,10 +58,20 @@ public:
 
   }
 
+  double mn_density(const double r, double z) {
+    // the MN disc component
+    double Z2 = z*z + z0*z0;
+    double Z  = sqrt(Z2);
+    double Q2 = (r0 + Z)*(r0 + Z);
+    double fdisk = 1 - fbulge;
+    double ddens = 0.25*z0*z0*fdisk*M/M_PI*(r0*r*r + (r0 + 3.0*Z)*Q2)/( pow(r*r + Q2, 2.5) * Z*Z2 );
+    return ddens
+  }
+
   double disk_density(const double r, double z) {
 
     // the bulge component: set the normalisation
-    double ra = r/a;
+    double ra = sqrt(r*r+z*z)/a;
     double rc = 0; // no core allowed!
     double rho0 = (M*fbulge)/(4*M_PI*a*a*a*ra*ra/(2*(1+ra)*(1+ra))); // normalisation for bulge
     double bdens = rho0/((ra+rc)*pow((1+ra),3.)); // bulge density
@@ -178,7 +188,10 @@ void tabulate_deprojection(double H, double Rf, int NUMR, int NINT)
       double y12 = 1.0 - y*y;
       double z   = y/sqrt(y12)*H;
 
-      sigI[i] += lq.weight(n)*2.0*H*pow(y12, -1.5)*disk_density(r*Rf, z);
+      //sigI[i] += lq.weight(n)*2.0*H*pow(y12, -1.5)*disk_density(r*Rf, z);
+
+      // deproject _only_ the MN density
+      sigI[i] += lq.weight(n)*2.0*H*pow(y12, -1.5)*mn_density(r*Rf, z);
     }
   }
 

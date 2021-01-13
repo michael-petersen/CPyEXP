@@ -297,7 +297,7 @@ double DiskDens(double R, double z, double phi)
 
   case DiskType::bmn:
     {
-      double ra = R/BSCALE;
+      double ra = sqrt(R*R+z*z)/BSCALE;
       double rc = 0; // no core allowed!
       double rho0 = (FBULGE)/(4*M_PI*BSCALE*BSCALE*BSCALE*ra*ra/(2*(1+ra)*(1+ra))); // normalisation for bulge
       double bdens = rho0/((ra+rc)*pow((1+ra),3.)); // bulge density

@@ -25,7 +25,7 @@ public:
   {
     double ra = sqrt(R*R + q*q*z*z)/rs;
     double testrho0 = 1./(pow(rc,alpha)*(pow(1,beta)));
-    return (rho0)/(testrho0*pow(ra+rc,alpha)*pow(1+ra,beta));
+    return (rho0/testrho0)/(pow(ra+rc,alpha)*pow(1+ra,beta));
   }
 
 };

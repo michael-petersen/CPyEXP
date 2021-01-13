@@ -11,3 +11,4 @@ dist/*
 *.o
 io/psp
 io/halo_utils
+manga_data/readmanga

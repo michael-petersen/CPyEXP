@@ -1,32 +1,20 @@
-     __________   ___ .______   .___________.  ______     ______    __      
-    |   ____\  \ /  / |   _  \  |           | /  __  \   /  __  \  |  |     
-    |  |__   \  V  /  |  |_)  | `---|  |----`|  |  |  | |  |  |  | |  |     
-    |   __|   >   <   |   ___/      |  |     |  |  |  | |  |  |  | |  |     
-    |  |____ /  .  \  |  |          |  |     |  `--'  | |  `--'  | |  `----.
-    |_______/__/ \__\ | _|          |__|      \______/   \______/  |_______|
-
-      ___  ______ .______   .______   ___  
-     /  / /      ||   _  \  |   _  \  \  \ 
-    |  | |  ,----'|  |_)  | |  |_)  |  |  |
-    |  | |  |     |   ___/  |   ___/   |  |
-    |  | |  `----.|  |      |  |       |  |
-    |  |  \______|| _|      | _|       |  |
-     \__\                             /__/ 
-### python analysis of exp files (cpp routines)
+# python analysis of exp files (cpp routines)
 
 
-#### Version 0.01
-A collection of C++ routines that will eventually be turned into something real, hopefully.
+## Version 0.1
+A collection of C++ routines that will eventually be turned into something real, hopefully. These are currently mostly intended as add-ons to EXP; some codes are available as standalone implementations.
 
 Currently, the included toolbox has
-1. area_calculate: Delaunay triangulation
-2. cylcache: generate empirical orthogonal functions as per Weinberg 1999
-3. twopower: build simple two-power density models
-4. ic_generation/
+1. analysis/
+   1. area_calculate: Delaunay triangulation (standalone)
+   2. forcetrace: template for slicing across EXP dumps efficiently. (requires EXP)
+   3. spinparam: compute the spin paramater of a halo. (requires EXP)
+2. io/ (all require EXP)
+3. manga_data/ (all standalone)
+   1. readmanga: read in custom packaged manga data for C++ analysis.
+4. ic_generation/ (all require EXP)
 
-   1. forcetrace: template for slicing across EXP dumps efficiently. requires EXP support
-
-	2. basicics
+   2. basicics
    
 	   1. DiskHalo5.cc
 
@@ -44,6 +32,9 @@ Currently, the included toolbox has
 	   
    6. exponential3.h
 
+   7. twopower: build simple two-power density models
 
+   8. cylcache: generate empirical orthogonal functions as per Weinberg 1999
 
-
+5. include/
+   1. DiskModels.H: upgraded options for disc models (requires EXP)
