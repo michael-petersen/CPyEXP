@@ -17,6 +17,7 @@
 #include <interp.h>
 #include <numerical.h>
 #include <exponential.h>
+#include <mndisk.h>
 #include <Vector.h>
 #include <interp.h>
 				// Local
@@ -49,6 +50,7 @@ double DiskHalo::ECUT_DF     = 1.0;
 
 int    DiskHalo::LOGSCALE    = 0;
 bool   DiskHalo::LOGR        = true;
+bool   DiskHalo::MND         = true;
 
 // these appear to be good settings, but may not be the best. use with caution!
 int    DiskHalo::NCHEB       = 8;
@@ -117,7 +119,12 @@ DiskHalo(SphericalSLptr haloexp, EmpCylSLptr diskexp,
 
   halo = std::make_shared<SphericalModelTable>(filename, DIVERGE, DIVERGE_RFAC);
 
+  if (MND) {
+  disk = std::make_shared<MNDisk>(A, RDMAX);
+
+  } else {
   disk = std::make_shared<ExponentialDisk>(A, RDMAX);
+  }
 
   if (myid==0 && VFLAG & 1) {
     std::cerr << "DiskHalo: DIVERGE=" << DIVERGE
@@ -195,7 +202,11 @@ DiskHalo(SphericalSLptr haloexp, EmpCylSLptr diskexp,
 
   halo = std::make_shared<SphericalModelTable>(filename1, DIVERGE, DIVERGE_RFAC);
 
+  if (MND) {
+  disk = std::make_shared<MNDisk>(A, RDMAX);
+  } else {
   disk = std::make_shared<ExponentialDisk>(A, RDMAX);
+  }
 
   if (myid==0 && VFLAG & 1) {
     std::cerr << "DiskHalo: DIVERGE=" << DIVERGE
@@ -345,9 +356,8 @@ DiskHalo::DiskHalo(const DiskHalo &p)
 
 double DiskHalo::disk_density(double R, double z)
 {
-  //double q = 1.0/cosh(z/scaleheight);
-  //return disk_surface_density(R)*q*q*0.5/scaleheight;
-  return disk->disk_density(R,z);
+  double q = 1.0/cosh(z/scaleheight);
+  return disk_surface_density(R)*q*q*0.5/scaleheight;
 }
 
 double DiskHalo::disk_surface_density(double R)
@@ -1214,14 +1224,11 @@ table_disk(vector<Particle>& part)
 
       
       workV[0][j] = log(RDMIN) + dR*j;
-				// Use monopole approximation for
-				// dPhi/dr
-#ifdef MONOPOLEFR      
-      workE[j] = odd2(workV[0][j], nrD, nhD, 1)/(R*R);
-#else
-      // Use basis evaluation (dPhi/dr)
+				// Use monopole approximation for dPhi/dr
+      // workE[j] = odd2(workV[0][j], nrD, nhD, 1)/(R*R);
+				// Use basis evaluation (dPhi/dr)
       workE[j]    = max<double>(-fr + dpr, 1.0e-20);
-#endif
+
       workV[1][j] = disk_surface_density(R);
 				// Sigma(R)*dPhi/dr*R
       workV[2][j] = workV[1][j]*workE[j]*R;
@@ -1722,8 +1729,9 @@ double DiskHalo::v_circ(double xp, double yp, double zp)
 
 				// Sanity check
   if (vcirc2<=0.0) {
-    std::cout << "DiskHalo::v_circ: circular velocity out of bounds, R="
-	      << R << "  v_circ2=" << vcirc2 << std::endl;
+    if (VFLAG & 8)
+      std::cout << "DiskHalo::v_circ: circular velocity out of bounds, R="
+		<< R << "  v_circ2=" << vcirc2 << std::endl;
     vcirc2 = 1.0e-20;
   }
 
@@ -1745,6 +1753,7 @@ set_vel_disk(vector<Particle>& part)
   double maxVZ=-1.0e20, RVZ=1e20;
   double vz, vr, vp, R, x, y, z, ac, vc, va, as, ad;
   double vel[3], vel1[3], massp, massp1;
+  unsigned num_oob = 0;
 
   for (int k=0; k<3; k++) vel[k] = vel1[k] = 0.0;
   massp = massp1 = 0.0;
@@ -1799,8 +1808,9 @@ set_vel_disk(vector<Particle>& part)
     if (maxVR < vvR) {
       maxVR = vvR;
       RVR   = R;
-      std::cout << "maxVR: vvR = " << vvR
-		<< " x=" << x << " y=" << y << std::endl;
+      if (VFLAG & 8)
+	std::cout << "maxVR: vvR = " << vvR
+		  << " x=" << x << " y=" << y << std::endl;
     }
     if (maxVP < vvP) {
       maxVP = vvP;
@@ -1819,20 +1829,25 @@ set_vel_disk(vector<Particle>& part)
       ad = a_drift(x, y, z);
       as = 1 + vvR*ad/(vc*vc);
 
-      if (as > 0.0)
+      if (as > 0.0 and not std::isnan(as))
 	ac = vc*(1.0-sqrt(as));
       else {
-	if (as<0.0) ac = vc;
-	int op = std::cout.precision(3);
-	std::cout << "ac oab:"
-		  << " as="   << std::setw(10) << as 
-		  << ", R="   << std::setw(10) << R
-		  << ", ac="  << std::setw(10) << ac
-		  << ", ad="  << std::setw(10) << ad
-		  << ", vc="  << std::setw(10) << vc
-		  << ", vvR=" << std::setw(10) << vvR
-		  << std::endl;
-	std::cout.precision(op);
+	if (as<0.0 or std::isnan(as)) {
+	  ac = vc;
+	  num_oob++;
+	}
+	if (VFLAG & 8) {
+	  int op = std::cout.precision(3);
+	  std::cout << "ac oob:"
+		    << " as="   << std::setw(10) << as 
+		    << ", R="   << std::setw(10) << R
+		    << ", ac="  << std::setw(10) << ac
+		    << ", ad="  << std::setw(10) << ad
+		    << ", vc="  << std::setw(10) << vc
+		    << ", vvR=" << std::setw(10) << vvR
+		    << std::endl;
+	  std::cout.precision(op);
+	}
       }
 
     case Jeans:
@@ -1963,14 +1978,19 @@ set_vel_disk(vector<Particle>& part)
 	RVP   = v2;
       }
     }
-    std::cout << "     *****";
-    std::cout << " (u, v, w)=(" << vel[0] 
+
+    MPI_Reduce(MPI_IN_PLACE, &num_oob, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    std::cout << "     *****"
+	      << " (u, v, w)=(" << vel[0] 
 	      << ", " << vel[1]
-	      << ", " << vel[2] << ")" << std::endl;
-    std::cout <<   "maxVZ=" << maxVZ << " (" << RVZ << ")"
+	      << ", " << vel[2] << ")" << std::endl
+	      <<   "maxVZ=" << maxVZ << " (" << RVZ << ")"
 	      << ", maxVR=" << maxVR << " (" << RVR << ")"
 	      << ", maxVP=" << maxVP << " (" << RVP << ")"
-	      << std::endl;
+	      << std::endl
+	      << "     *****"
+	      << " # adrift overrides=" << num_oob << std::endl;
   } else {
     MPI_Send(&maxVZ, 1, MPI_DOUBLE, 0, 224, MPI_COMM_WORLD);
     MPI_Send(&RVZ,   1, MPI_DOUBLE, 0, 225, MPI_COMM_WORLD);
@@ -1978,6 +1998,8 @@ set_vel_disk(vector<Particle>& part)
     MPI_Send(&RVR,   1, MPI_DOUBLE, 0, 227, MPI_COMM_WORLD);
     MPI_Send(&maxVP, 1, MPI_DOUBLE, 0, 228, MPI_COMM_WORLD);
     MPI_Send(&RVP,   1, MPI_DOUBLE, 0, 229, MPI_COMM_WORLD);
+
+    MPI_Reduce(&num_oob, 0, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
   }
 
   if (cov) {
@@ -2888,3 +2910,4 @@ void DiskHalo::profile(ostream &out, vector<Particle>& dpart,
     }
   } 
 }
+
