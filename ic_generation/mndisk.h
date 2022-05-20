@@ -8,6 +8,14 @@
 // more clever work is needed to make this work generally... a typical
 //  3dimensional disc?
 //
+// exp/src/user$ grep "<exponential.h>" src/user*.cc
+// to see where to remove (I think it's all junk?)
+
+// if using, be sure that call in DiskHalo2.cc is correct: disk = std::make_shared<ExponentialDisk>(A,H,RDMAX);
+// modify DiskHalo2.cc to call out for the disc model for density and surface density too. check surface density calculation scaling.
+// check length scaling and what should _actually_ be fed into deprojection for length scale
+
+// https://www.wolframalpha.com/input/?i=integrate+x*%28a*x*x+%2B+%28a+%2B+3.0*h%29*1%29%2F%28+%28x*x+%2B+1%29%5E%285%2F2%29+*+%28H%29%5E%281%2F2%29+%29+from+0+to+x
 
 #ifndef _MN_h
 #define _MN_h
@@ -21,8 +29,8 @@ const char rcsid_mn[] = "$Id$";
 #include <interp.h>
 
 
-//class MNDisk : public AxiSymModel
-class ExponentialDisk : public AxiSymModel
+class MNDisk : public AxiSymModel
+//class ExponentialDisk : public AxiSymModel
 {
 private:
   
@@ -38,22 +46,22 @@ public:
 
   
   
-  //MNDisk(double RSCALE=1.0, double HSCALE=0.1, double RMAX=20.0, double DMASS=1.0) 
-  ExponentialDisk(double RSCALE=1.0, double HSCALE=0.1, double RMAX=20.0, double DMASS=1.0) 
+  MNDisk(double RSCALE=1.0, double HSCALE=0.1, double RMAX=20.0, double DMASS=1.0) 
+  //ExponentialDisk(double RSCALE=1.0, double HSCALE=0.1, double RMAX=20.0, double DMASS=1.0) 
   { 
     a       = RSCALE;
     h       = HSCALE;
     rmin    = 1.0e-8;
     rmax    = RMAX;
     m       = DMASS;
-    den0    = m*0.5/M_PI/a/a;
+    den0    = 1;
     dim     = 3;
     ModelID = "MN3Disk"; 
 
     dist_defined = false;
 
     
-    tabulate_deprojection(HSCALE/RSCALE,1.0,200,1000,massfunc,sdens);
+    tabulate_deprojection(HSCALE,RSCALE,2000,1000,massfunc,sdens);
     
   }
 
@@ -65,6 +73,15 @@ public:
     return 0.25*h*h*m/M_PI*(a*r*r + (a + 3.0*Z)*Q2)/( pow(r*r + Q2, 2.5) * Z*Z2 );
 }
 
+  
+
+  double disk_density(const double r, double z, double aa, double hh) {
+
+    double Z2 = z*z + hh*hh;
+    double Z  = sqrt(Z2);
+    double Q2 = (aa + Z)*(aa + Z);
+    return 0.25*hh*hh*m/M_PI*(aa*r*r + (aa + 3.0*Z)*Q2)/( pow(r*r + Q2, 2.5) * Z*Z2 );
+}
 
   // Required member functions
 
@@ -129,7 +146,7 @@ public:
 
 
 
-  void tabulate_deprojection(double H, double Rf, int NUMR, int NINT,
+void tabulate_deprojection(double H, double Rf, int NUMR, int NINT,
 			     Linear1d &massRg, Linear1d &rsurf)
 {
   LegeQuad lq(NINT);
@@ -161,7 +178,7 @@ public:
       double y12 = 1.0 - y*y;
       double z   = y/sqrt(y12)*H;
 
-      sigI[i] += lq.weight(n)*2.0*H*pow(y12, -1.5)*disk_density(r*Rf, z);
+      sigI[i] += lq.weight(n)*2.0*H*pow(y12, -1.5)*disk_density(r, z);
     }
   }
 
@@ -203,7 +220,7 @@ public:
 
   // Debug
   //
-    std::ostringstream outf; outf << "deproject_sl.1.0";
+    std::ostringstream outf; outf << "deproject_sl.mn.0";
     std::ofstream out(outf.str());
     if (out) {
       for (int i=0; i<NUMR; i++)

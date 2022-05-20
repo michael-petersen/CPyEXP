@@ -47,8 +47,7 @@ public:
 
     dist_defined = false;
 
-    tabulate_deprojection(HSCALE/RSCALE,1.0,200,1000);
-    sdens = rsurf;
+    tabulate_deprojection(HSCALE,RSCALE,200,1000);
     
   }
 
@@ -158,7 +157,7 @@ void tabulate_deprojection(double H, double Rf, int NUMR, int NINT)
       double y12 = 1.0 - y*y;
       double z   = y/sqrt(y12)*H;
 
-      sigI[i] += lq.weight(n)*2.0*H*pow(y12, -1.5)*disk_density(r*Rf, z);
+      sigI[i] += lq.weight(n)*2.0*H*pow(y12, -1.5)*disk_density(r, z);
     }
   }
 
@@ -197,6 +196,18 @@ void tabulate_deprojection(double H, double Rf, int NUMR, int NINT)
     mass[i] = mass[i-1] + 2.0*M_PI*(rlst*rlst*rho[i-1] + rcur*rcur*rho[i])*(rcur - rlst);
   }
 
+  // Debug
+  //
+    std::ostringstream outf; outf << "deproject_sl.exp.0";
+    std::ofstream out(outf.str());
+    if (out) {
+      for (int i=0; i<NUMR; i++)
+	out << std::setw(18) << rl[i]
+	    << std::setw(18) << rr[i]
+	    << std::setw(18) << rho[i]
+	    << std::setw(18) << mass[i]
+	    << std::endl;
+    }
 
   // Finalize
   //

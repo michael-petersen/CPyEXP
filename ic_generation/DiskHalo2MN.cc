@@ -16,9 +16,8 @@
 				// MDW
 #include <interp.h>
 #include <numerical.h>
-#include <exponential3.h>
-//#include <exponential.h>
-//#include <bulgedisc.h>
+//#include <exponential3.h>
+#include <mndisk.h>
 #include <Vector.h>
 #include <interp.h>
 				// Local
@@ -119,7 +118,7 @@ DiskHalo(SphericalSLptr haloexp, EmpCylSLptr diskexp,
 
   halo = std::make_shared<SphericalModelTable>(filename, DIVERGE, DIVERGE_RFAC);
 
-  disk = std::make_shared<ExponentialDisk>(A,H,RDMAX);
+  disk = std::make_shared<MNDisk>(A,H,RDMAX);
 
   if (myid==0 && VFLAG & 1) {
     std::cerr << "DiskHalo: DIVERGE=" << DIVERGE
@@ -197,7 +196,7 @@ DiskHalo(SphericalSLptr haloexp, EmpCylSLptr diskexp,
 
   halo = std::make_shared<SphericalModelTable>(filename1, DIVERGE, DIVERGE_RFAC);
 
-  disk = std::make_shared<ExponentialDisk>(A,H, RDMAX);
+  disk = std::make_shared<MNDisk>(A,H, RDMAX);
 
   if (myid==0 && VFLAG & 1) {
     std::cerr << "DiskHalo: DIVERGE=" << DIVERGE
@@ -347,9 +346,10 @@ DiskHalo::DiskHalo(const DiskHalo &p)
 
 double DiskHalo::disk_density(double R, double z)
 {
-  //double q = 1.0/cosh(z/scaleheight);
-  //return disk_surface_density(R)*q*q*0.5/scaleheight;
-  return disk->disk_density(R,z);
+    double Z2 = z*z + h*h;
+    double Z  = sqrt(Z2);
+    double Q2 = (a + Z)*(a + Z);
+    return 0.25*h*h*m/M_PI*(a*r*r + (a + 3.0*Z)*Q2)/( pow(r*r + Q2, 2.5) * Z*Z2 );
 }
 
 double DiskHalo::disk_surface_density(double R)
